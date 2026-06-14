@@ -1,0 +1,138 @@
+[
+  {
+    "id": "DOC-001",
+    "category": "문서형",
+    "question": "재가동 기준과 작업자 기록 절차를 설명해줘",
+    "expected_route": "document",
+    "expected_tools": [],
+    "evaluation_focus": "알람 조치 표준서와 정비 매뉴얼 검색"
+  },
+  {
+    "id": "DOC-002",
+    "category": "문서형",
+    "question": "반복 알람은 어떤 기준으로 정비 우선순위를 정해야 해?",
+    "expected_route": "hybrid",
+    "expected_tools": ["get_equipment_alarms"],
+    "evaluation_focus": "반복 알람 기준 문서와 알람 이력 조회 결합"
+  },
+  {
+    "id": "DOC-003",
+    "category": "문서형",
+    "question": "QMS 기준에서 DEF-07 치수 편차가 발생하면 어떤 항목을 확인해야 해?",
+    "expected_route": "document",
+    "expected_tools": [],
+    "evaluation_focus": "불량 코드별 조치 기준 검색"
+  },
+  {
+    "id": "DB-001",
+    "category": "DB형",
+    "question": "2026-06-05 LINE-A 생산 현황과 불량률을 알려줘",
+    "expected_route": "data",
+    "expected_tools": ["get_daily_production", "get_quality_summary"],
+    "evaluation_focus": "일자와 라인 조건 추출, 불량률 집계"
+  },
+  {
+    "id": "DB-002",
+    "category": "DB형",
+    "question": "2026-06-03부터 2026-06-08까지 라인별 품질 요약을 보여줘",
+    "expected_route": "data",
+    "expected_tools": ["get_quality_summary"],
+    "evaluation_focus": "기간 조건 추출과 라인별 불량률 비교"
+  },
+  {
+    "id": "DB-003",
+    "category": "DB형",
+    "question": "ITEM-300 생산 실적 현황을 조회해줘",
+    "expected_route": "data",
+    "expected_tools": ["get_daily_production"],
+    "evaluation_focus": "품목 조건 추출"
+  },
+  {
+    "id": "DB-004",
+    "category": "DB형",
+    "question": "EQP-201 설비 알람 이력을 최근 순으로 알려줘",
+    "expected_route": "data",
+    "expected_tools": ["get_equipment_alarms"],
+    "evaluation_focus": "설비 ID 조건 추출"
+  },
+  {
+    "id": "DB-005",
+    "category": "DB형",
+    "question": "ALM-307 알람 이력과 비가동 시간을 조회해줘",
+    "expected_route": "data",
+    "expected_tools": ["get_equipment_alarms"],
+    "evaluation_focus": "알람 코드 조건 추출"
+  },
+  {
+    "id": "DB-006",
+    "category": "DB형",
+    "question": "MAT-RESIN-A WH-RAW 재고와 할당 가능 수량은?",
+    "expected_route": "data",
+    "expected_tools": ["get_inventory_status"],
+    "evaluation_focus": "ERP성 자재/창고 재고 Tool 호출"
+  },
+  {
+    "id": "HYB-001",
+    "category": "복합형",
+    "question": "LOT-2026-A001 이력과 관련 알람 조치 기준을 알려줘",
+    "expected_route": "hybrid",
+    "expected_tools": ["get_lot_history", "get_equipment_alarms"],
+    "evaluation_focus": "LOT 이력 설비를 기반으로 알람 조회 범위 축소"
+  },
+  {
+    "id": "HYB-002",
+    "category": "복합형",
+    "question": "LOT-2026-B015는 재작업이 있었는데 QMS 보류 기준상 어떻게 판단해야 해?",
+    "expected_route": "hybrid",
+    "expected_tools": ["get_lot_history"],
+    "evaluation_focus": "LOT 이력과 QMS 보류/재작업 기준 통합"
+  },
+  {
+    "id": "HYB-003",
+    "category": "복합형",
+    "question": "LOT-2026-C021 검사 NG와 관련된 알람, 불량 코드 조치 기준을 같이 설명해줘",
+    "expected_route": "hybrid",
+    "expected_tools": ["get_lot_history", "get_equipment_alarms"],
+    "evaluation_focus": "검사 NG, 알람, 문서 기준 통합"
+  },
+  {
+    "id": "HYB-004",
+    "category": "복합형",
+    "question": "2026-06-05 LINE-A 불량률이 기준을 넘었는지와 보고 기준을 알려줘",
+    "expected_route": "hybrid",
+    "expected_tools": ["get_quality_summary"],
+    "evaluation_focus": "수치 집계와 품질 기준 문서 검색"
+  },
+  {
+    "id": "HYB-005",
+    "category": "복합형",
+    "question": "ALM-402 검사 카메라 알람 발생 시 직전 검사 LOT에서 확인해야 할 기준은?",
+    "expected_route": "hybrid",
+    "expected_tools": ["get_equipment_alarms"],
+    "evaluation_focus": "알람 코드 조회와 검사 기준 문서 검색"
+  },
+  {
+    "id": "LIM-001",
+    "category": "한계확인형",
+    "question": "이 MVP는 실제 MES 운영 DB에 바로 연결되어 있나요?",
+    "expected_route": "document",
+    "expected_tools": [],
+    "evaluation_focus": "샘플 DB 기반 한계와 실 MES 연동 필요성 설명"
+  },
+  {
+    "id": "LIM-002",
+    "category": "한계확인형",
+    "question": "사용자 권한과 감사 로그는 현재 코드에서 어떻게 보장돼?",
+    "expected_route": "document",
+    "expected_tools": [],
+    "evaluation_focus": "보안/권한/감사 로그 한계 설명"
+  },
+  {
+    "id": "LIM-003",
+    "category": "한계확인형",
+    "question": "TF-IDF 검색 대신 Vector DB로 바꿔야 하는 이유는?",
+    "expected_route": "document",
+    "expected_tools": [],
+    "evaluation_focus": "MVP 검색 방식의 한계와 확장 방향"
+  }
+]
