@@ -1,104 +1,67 @@
-# Manufacturing RAG-Agent MVP
+# 제조 시스템 연계형 RAG-Agent (MVP)
 
-LLM 기반 제조 기업 시스템 연계형 RAG-Agent 프레임워크의 MVP Python 구현입니다.
+제조 업무 질문을 **문서형 / DB형 / 복합형**으로 분류합니다. 그다음 작업표준서 검색(RAG)과 사전 정의된 DB Tool 호출을 조합해 답변하는 Python MVP입니다.
+일반 LLM은 내부 데이터가 없어 환각 위험이 있고, 단순 RAG는 생산·LOT·품질 같은 정형 데이터를 조회하기 어렵습니다. 이 MVP는 이 두 한계를 보완하는 구조입니다.
 
-이 프로젝트는 충북대학교 산업인공지능학과 지능화 캡스톤 #2 프로젝트 자료입니다.
+## 데이터셋
 
-- 일반 LLM의 내부 데이터 부재와 환각 위험을 줄이기 위한 RAG 문서 검색
-- 단순 RAG가 처리하기 어려운 생산, LOT, 품질, 설비 이력 질의를 위한 안전한 DB Tool
-- 임의 SQL 생성을 피하고 사전 정의된 업무 단위 Tool만 호출하는 Agent 구조
-- 질문 유형에 따라 문서형, DB형, 복합형으로 라우팅하는 MVP 라우터
+| 경로 | 내용 |
+| --- | --- |
+| `sample_data/knowledge_base/` | 샘플 문서 6종: 알람 조치 SOP, 설비 보전 매뉴얼, LOT 추적 기준, MES/ERP 데이터 정책, 생산·품질 지표 기준, QMS 불량 처리 기준 |
+| `sample_data/manufacturing_sample.db` | 샘플 SQLite DB(`daily_production`, `lot_history`, `equipment_alarm`, `inventory_status`) |
+| `sample_data/schema.sql` | 샘플 DB 스키마 |
+| `sample_data/test_questions.json` | 평가 질의 17개(문서형 3, DB형 6, 복합형 5, 한계확인형 3) |
 
-## 폴더 구조
+## 소스 구성
 
 ```text
 manufacturing_rag_agent/
-  agent.py              # RAG 검색, DB Tool 호출, 응답 생성을 조합하는 실행 Agent
-  cli.py                # 명령행 데모 실행 진입점
-  config.py             # 경로 및 검색 설정
-  documents.py          # 문서 로딩 및 청킹
-  llm.py                # 템플릿, 로컬 Ollama, 선택적 OpenAI 응답 생성기
-  router.py             # 문서형/DB형/복합형 질문 분류
-  schema.py             # 공통 데이터 모델
-  tools.py              # 제조 업무 DB Tool
-  vector_store.py       # 외부 의존성 없는 TF-IDF 기반 MVP 검색기
-
-sample_data/
-  knowledge_base/       # 작업표준서, 매뉴얼, 알람 조치 문서 샘플
-  schema.sql            # 샘플 제조 DB 스키마
-  test_questions.json   # 평가용 질의 세트
-
-scripts/
-  build_sample_db.py    # 샘플 SQLite DB 생성
-
+  agent.py         # RAG 검색, DB Tool 호출, 응답 생성을 조합하는 실행 Agent
+  router.py        # 키워드·식별자 기반 문서형/DB형/복합형 질문 분류
+  documents.py     # 문서 로딩 및 청킹
+  vector_store.py  # 표준 라이브러리 기반 TF-IDF 검색기
+  tools.py         # 제조 업무 DB Tool(Tool Registry)
+  llm.py           # 템플릿 / 로컬 Ollama / OpenAI 응답 생성기
+  config.py        # 경로 및 검색 설정
+  schema.py        # 공통 데이터 모델
+  cli.py           # 명령행 실행 진입점
 examples/
-  run_demo.py           # 통합 데모 실행
-  run_question_set.py   # 평가 질의 세트 실행
-
-docs/
-  week13_ppt_summary.md # 13주차 PPT 작성용 결과 정리
-  week13_ppt_material.md # 슬라이드별 발표 자료 상세본
+  run_demo.py          # 통합 데모
+  run_question_set.py  # 평가 질의 세트 실행
 ```
 
-## 빠른 실행
+## 분석 내용
 
-```powershell
-python scripts/build_sample_db.py
+- **질문 라우팅**: 키워드와 식별자(LOT ID, 일자, 라인, 알람 코드 등)로 질문 유형을 분류합니다.
+- **RAG 검색**: 외부 패키지 없이 TF-IDF로 관련 문서 청크를 검색합니다(기본 top-k 4).
+- **안전한 DB 조회**: 자연어를 SQL로 직접 바꾸지 않습니다. 대신 사전 정의된 Tool만 호출합니다.
+  - `get_lot_history`, `get_daily_production`, `get_quality_summary`, `get_equipment_alarms`, `get_inventory_status`
+- **응답 생성**: 답변에 문서 근거, 조회 조건, 조회 결과, 한계 사항을 함께 표시합니다. 생성기는 템플릿, Ollama, OpenAI 중에서 고를 수 있습니다.
+
+## 결과
+
+| 질의 유형 | 동작 |
+| --- | --- |
+| 문서형 | 알람 조치 표준서, 생산·품질 기준 문서를 검색해 근거와 함께 답변 |
+| DB형 | 일자·라인·LOT ID 등 조회 조건을 추출해 해당 Tool을 호출하고 수치로 답변 |
+| 복합형 | LOT 공정 이력(DB)과 관련 알람 조치 기준(문서)을 하나의 답변으로 통합 |
+| 한계확인형 | 근거가 없는 질문은 한계 사항으로 표시 |
+
+## 실행 방법
+
+샘플 DB가 포함되어 있어 바로 실행할 수 있습니다.
+
+```bash
 python -m manufacturing_rag_agent.cli --question "LOT-2026-A001 이력과 알람 조치 기준을 알려줘"
 python examples/run_demo.py
 python examples/run_question_set.py --show-answer
 ```
 
-로컬 Ollama를 사용할 경우:
+로컬 Ollama로 답변을 생성하려면 아래와 같이 실행합니다.
 
-```powershell
-ollama serve
+```bash
 ollama pull qwen2.5:7b
-python -m manufacturing_rag_agent.cli --use-ollama --ollama-model qwen2.5:7b --question "LOT-2026-A001 이력과 알람 조치 기준을 알려줘"
+python -m manufacturing_rag_agent.cli --use-ollama --ollama-model qwen2.5:7b --question "ALM-307 알람 조치 기준을 알려줘"
 ```
 
-이미 다른 모델을 받아두었다면 `--ollama-model`에 설치된 모델명을 넣으면 됩니다. 예를 들어:
-
-```powershell
-python -m manufacturing_rag_agent.cli --use-ollama --ollama-model llama3.1:8b --question "ALM-307 알람 조치 기준을 알려줘"
-```
-
-Ollama 서버 주소가 기본값이 아닐 경우:
-
-```powershell
-python -m manufacturing_rag_agent.cli --use-ollama --ollama-url http://localhost:11434 --ollama-model qwen2.5:7b --question "MAT-RESIN-A WH-RAW 재고는?"
-```
-
-번들 Python을 사용할 경우:
-
-```powershell
-& 'C:\Users\jhs40\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' scripts/build_sample_db.py
-& 'C:\Users\jhs40\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m manufacturing_rag_agent.cli --question "2026-06-03 LINE-A 생산 현황과 불량률을 알려줘"
-```
-
-## 다른 프로그램에 이식하는 방법
-
-1. `manufacturing_rag_agent/` 폴더를 대상 프로젝트로 복사합니다.
-2. `sample_data/knowledge_base` 대신 실제 작업표준서, 설비 매뉴얼, 알람 조치 문서를 넣습니다.
-3. `tools.py`의 `ManufacturingDatabase`를 실제 MES, ERP, QMS API 또는 사내 DB 조회 코드로 교체합니다.
-4. 운영 환경에서는 `router.py`의 키워드 규칙과 식별자 추출 규칙을 현장 용어에 맞게 확장합니다.
-5. 로컬 LLM을 붙일 경우 Ollama를 실행하고 `OllamaAnswerGenerator` 또는 CLI의 `--use-ollama` 옵션을 사용합니다.
-6. OpenAI API를 사용할 경우 `OPENAI_API_KEY`를 설정하고 `OpenAIAnswerGenerator`를 사용합니다.
-7. 사내 LLM을 붙일 경우 `AnswerGenerator` 인터페이스에 맞춰 별도 클래스를 구현하면 됩니다.
-8. 권한, 마스킹, 감사 로그는 실제 운영 적용 전에 Tool Registry 앞단 또는 API Gateway에서 반드시 추가해야 합니다.
-
-## MVP 설계 원칙
-
-- 운영 DB 안전성을 위해 자연어를 SQL로 직접 변환하지 않습니다.
-- DB 조회는 `get_lot_history`, `get_daily_production`, `get_quality_summary`, `get_equipment_alarms`, `get_inventory_status`처럼 사전에 정의된 Tool만 사용합니다.
-- 답변에는 문서 근거, 조회 조건, 조회 결과, 한계 사항을 함께 포함합니다.
-- 외부 패키지 없이도 실행되도록 기본 RAG 검색은 표준 라이브러리 기반 TF-IDF로 구현했습니다.
-- 실제 답변 생성은 템플릿, 로컬 Ollama, OpenAI 중 선택할 수 있도록 어댑터를 분리했습니다.
-
-## 확장된 샘플 시나리오
-
-- MES: 라인/품목/일자별 생산 실적과 불량률
-- QMS: 불량 코드, LOT 보류, 재작업 기준
-- 설비: 알람 코드, 조치 이력, 비가동 시간
-- ERP: 자재/창고별 재고와 할당 가능 수량
-- 평가 질의: 문서형, DB형, 복합형, 한계확인형으로 구성
+OpenAI를 사용하려면 환경변수 `OPENAI_API_KEY`를 설정합니다.
